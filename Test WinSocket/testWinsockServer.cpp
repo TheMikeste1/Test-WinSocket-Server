@@ -1,10 +1,24 @@
-/***********************************************************************
+/*****************************************************************************
 * Author:
 *    Michael Hegerhorst
 * Summary:
 *
 *
-************************************************************************/
+******************************************************************************/
+/*****************************************************************************
+ * Help from
+ * https://docs.microsoft.com/en-us/windows/desktop/winsock/about-clients-and-servers
+ *
+ * SERVER STEPS
+ *  1. Initialize Winsock.
+ *  2. Create a socket.
+ *  3. Bind the socket.
+ *  4. Listen on the socket for a client.
+ *  5. Accept a connection from a client.
+ *  6. Receive and send data.
+ *  7. Disconnect.
+ *
+ *****************************************************************************/
 
 #include <iostream>
 #include <winsock2.h>
@@ -21,21 +35,6 @@ using namespace std;
 
 
 /*****************************************************************************
- * Help from
- * https://docs.microsoft.com/en-us/windows/desktop/winsock/about-clients-and-servers
- * 
- * SERVER STEPS
- *  1. Initialize Winsock.
- *  2. Create a socket.
- *  3. Bind the socket.
- *  4. Listen on the socket for a client.
- *  5. Accept a connection from a client.
- *  6. Receive and send data.
- *  7. Disconnect.
- *
- *****************************************************************************/
-
-/*****************************************************************************
  * main()
  * This function pilots the program.
  *****************************************************************************/
@@ -47,10 +46,10 @@ int main()
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-basic-winsock-application
 	WSADATA wsaData;
 
-    int* result = new int(0);
-	if ((*result = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
+    int errorCode;
+	if ((errorCode = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 	{
-		cout << "WSAStartup failed: " << *result << endl;
+		cout << "WSAStartup failed: " << errorCode << endl;
 		return 1;
 	}
 
@@ -69,28 +68,28 @@ int main()
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags    = AI_PASSIVE; 
 
-	//1. The getaddrinfo function is used to determine the values 
+	//2.1. The getaddrinfo function is used to determine the values 
 	//   in the sockaddr structure:
-	if ((*result = getaddrinfo(NULL, port, &hints, &servinfo))
+	if ((errorCode = getaddrinfo(NULL, port, &hints, &servinfo))
 		!= 0)
 	{
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(*result));
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(errorCode));
 		WSACleanup();
 		return 1;
 	}
 
 	
 
-	//2. Create a SOCKET object called listenSocket for the server 
+	//2.2. Create a SOCKET object called listenSocket for the server 
 	//   to listen for client connections.
-	//3. Call the socket function and return its value to 
+	//2.3. Call the socket function and return its value to 
 	//   the listenSocket variable.
 	SOCKET listenSocket = socket(servinfo->ai_family, 
 							 servinfo->ai_socktype, 
 								 servinfo->ai_protocol);
 	//SOCKET == unsigned integer pointer
 
-	//4. Check for errors.
+	//2.4. Check for errors.
 	if (listenSocket == INVALID_SOCKET)
 	{
 		printf("Error at socket(): %ld\n", WSAGetLastError());
@@ -101,7 +100,7 @@ int main()
 	
 	// 3. Bind the socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/binding-a-socket
-	if ((*result = bind(listenSocket, servinfo->ai_addr, servinfo->ai_addrlen))
+	if ((errorCode = bind(listenSocket, servinfo->ai_addr, servinfo->ai_addrlen))
 		== SOCKET_ERROR)
 	{
 		printf("bind failed with error: %d\n", WSAGetLastError());
@@ -112,8 +111,6 @@ int main()
 	}
 
 	freeaddrinfo(servinfo); //"all done with this structure" -rpsServer.cpp
-	
-	delete result; //We don't need result anymore. Let's clear it.
 
 	// 4. Listen on the socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/listening-on-a-socket
@@ -128,10 +125,10 @@ int main()
 	// 5. Accept a connection.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/accepting-a-connection
 
-	//1. Create a temporary SOCKET
+	//5.1. Create a temporary SOCKET
 	SOCKET client1;
 
-	//2. Connect
+	//5.2. Connect
 	if ((client1 = accept(listenSocket, NULL, NULL)) 
 		== INVALID_SOCKET)
 	{
