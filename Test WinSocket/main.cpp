@@ -127,7 +127,21 @@ int main()
 
 	// 5. Accept a connection.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/accepting-a-connection
+
+	//1. Create a temporary SOCKET
 	SOCKET client1;
+
+	//2. Connect
+	if ((client1 = accept(listenSocket, NULL, NULL)) 
+		== INVALID_SOCKET)
+	{
+		printf("accept failed: %d\n", WSAGetLastError());
+	    closesocket(listenSocket);
+	    WSACleanup();
+	    return 1;
+	}
+
+	
 
 	cout << "server: waiting for connections...\n";
 	
