@@ -1,4 +1,4 @@
-/***********************************************************************
+/*****************************************************************************
 * Author:
 *    Michael Hegerhorst
 * Summary:
@@ -8,7 +8,7 @@
 /*****************************************************************************
  * Help from
  * https://docs.microsoft.com/en-us/windows/desktop/winsock/about-clients-and-servers
- * 
+ *
  * SERVER STEPS
  *  1. Initialize Winsock.
  *  2. Create a socket.
@@ -65,9 +65,9 @@ int main()
 	hints.ai_family   = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags    = AI_PASSIVE; 
+	hints.ai_flags    = AI_PASSIVE;
 
-	//2.1. The getaddrinfo function is used to determine the values 
+	//2.1. The getaddrinfo function is used to determine the values
 	//   in the sockaddr structure:
 	if ((errorCode = getaddrinfo(NULL, port, &hints, &servinfo))
 		!= 0)
@@ -77,14 +77,14 @@ int main()
 		return 1;
 	}
 
-	
 
-	//2.2. Create a SOCKET object called listenSocket for the server 
+
+	//2.2. Create a SOCKET object called listenSocket for the server
 	//   to listen for client connections.
-	//2.3. Call the socket function and return its value to 
+	//2.3. Call the socket function and return its value to
 	//   the listenSocket variable.
-	SOCKET listenSocket = socket(servinfo->ai_family, 
-							 servinfo->ai_socktype, 
+	SOCKET listenSocket = socket(servinfo->ai_family,
+							 servinfo->ai_socktype,
 								 servinfo->ai_protocol);
 	//SOCKET = unsigned integer pointer
 
@@ -92,11 +92,11 @@ int main()
 	if (listenSocket == INVALID_SOCKET)
 	{
 		printf("Error at socket(): %ld\n", WSAGetLastError());
-		freeaddrinfo(servinfo);    
+		freeaddrinfo(servinfo);
 		WSACleanup();
 		return 1;
 	}
-	
+
 	// 3. Bind the socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/binding-a-socket
 	if ((errorCode = bind(listenSocket, servinfo->ai_addr, servinfo->ai_addrlen))
@@ -129,7 +129,7 @@ int main()
 
 	//5.2. Connect
 	cout << "server: waiting for connections...\n";
-	if ((client1 = accept(listenSocket, NULL, NULL)) 
+	if ((client1 = accept(listenSocket, NULL, NULL))
 		== INVALID_SOCKET)
 	{
 		printf("accept failed: %d\n", WSAGetLastError());
@@ -140,7 +140,7 @@ int main()
 
 	closesocket(listenSocket); //We no longer need the listenSocket after
 							   //all wanted clients have connected.
-	
+
 
 	//Cleanup
 	WSACleanup();
