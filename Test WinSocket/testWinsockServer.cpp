@@ -31,7 +31,18 @@ using namespace std;
 
 #define DEFAULT_PORT "6789"
 #define BACKLOG 10
+#define DEFAULT_BUFLEN 512
 
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+   if (sa->sa_family == AF_INET)
+   {
+      return &(((struct sockaddr_in*)sa)->sin_addr);
+   }
+
+   return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 /*****************************************************************************
  * main()
@@ -45,10 +56,10 @@ int main()
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-basic-winsock-application
 	WSADATA wsaData;
 
-    int errorCode;
-	if ((errorCode = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
+    int resultCode;
+	if ((resultCode = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 	{
-		cout << "WSAStartup failed: " << errorCode << endl;
+		cout << "WSAStartup failed: " << resultCode << endl;
 		return 1;
 	}
 
@@ -69,10 +80,10 @@ int main()
 
 	//2.1. The getaddrinfo function is used to determine the values
 	//   in the sockaddr structure:
-	if ((errorCode = getaddrinfo(NULL, port, &hints, &servinfo))
+	if ((resultCode = getaddrinfo(NULL, port, &hints, &servinfo))
 		!= 0)
 	{
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(errorCode));
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(resultCode));
 		WSACleanup();
 		return 1;
 	}
@@ -99,7 +110,7 @@ int main()
 
 	// 3. Bind the socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/binding-a-socket
-	if ((errorCode = bind(listenSocket, servinfo->ai_addr, servinfo->ai_addrlen))
+	if ((resultCode = bind(listenSocket, servinfo->ai_addr, servinfo->ai_addrlen))
 		== SOCKET_ERROR)
 	{
 		printf("bind failed with error: %d\n", WSAGetLastError());
@@ -129,7 +140,13 @@ int main()
 
 	//5.2. Connect
 	cout << "server: waiting for connections...\n";
-	if ((client1 = accept(listenSocket, NULL, NULL))
+	
+	//This is to gather information about the client's IP.
+	struct sockaddr_storage their_address;
+	socklen_t size = sizeof their_address;
+	char s[INET6_ADDRSTRLEN];
+
+	if ((client1 = accept(listenSocket, (struct sockaddr *) &their_address, &size))
 		== INVALID_SOCKET)
 	{
 		printf("accept failed: %d\n", WSAGetLastError());
@@ -138,11 +155,58 @@ int main()
 	    return 1;
 	}
 
+	//This sets s to the IP of the client
+	inet_ntop(their_address.ss_family,
+      get_in_addr((struct sockaddr *)&their_address),
+      s, sizeof s);
+
+	cout << "Got connection from: " << s << endl;
+
 	closesocket(listenSocket); //We no longer need the listenSocket after
 							   //all wanted clients have connected.
 
 
+	// 6. Receive data.
+	//https://docs.microsoft.com/en-us/windows/desktop/winsock/receiving-and-sending-data-on-the-server
+	do
+	{
+		int recvBufferLen = DEFAULT_BUFLEN;
+		char* received = new char[recvBufferLen + 1];
+
+		resultCode = recv(client1, received, recvBufferLen, 0);
+		received[resultCode] = '\0';
+
+		if (resultCode > 0)
+		{
+			cout << received;
+		}
+		else if (resultCode == 0)
+		{
+			cout << "Connection closed by client\n";
+		}
+		else
+		{
+			printf("recv failed: %d\n", WSAGetLastError());
+	        closesocket(client1);
+	        WSACleanup();
+	        return 1;
+		}
+	} while (resultCode != 0);
+
+	// 7. Disconnect.
+	//https://docs.microsoft.com/en-us/windows/desktop/winsock/disconnecting-the-server
+	//7.1
+	if ((resultCode = shutdown(client1, SD_SEND)) == SOCKET_ERROR)
+	{
+		printf("shutdown failed: %d\n", WSAGetLastError());
+	    closesocket(client1);
+	    WSACleanup();
+	    return 1;
+	}
+
+	//7.2
 	//Cleanup
+	closesocket(client1);
 	WSACleanup();
 
 	return 0;
