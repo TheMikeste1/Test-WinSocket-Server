@@ -4,7 +4,7 @@
 * Summary:
 *
 *
-************************************************************************/
+******************************************************************************/
 /*****************************************************************************
  * Help from
  * https://docs.microsoft.com/en-us/windows/desktop/winsock/about-clients-and-servers
@@ -50,8 +50,7 @@ void *get_in_addr(struct sockaddr *sa)
  *****************************************************************************/
 int main()
 {
-
-	//SERVER STEP
+	//SERVER SETUP
 	// 1. Initialize Winsock.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-basic-winsock-application
 	WSADATA wsaData;
@@ -67,7 +66,6 @@ int main()
 	// 2. Create a socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-socket-for-the-server
 	struct addrinfo *servinfo = NULL;
-	struct addrinfo *p = NULL;
 	struct addrinfo hints;
 
 	PCSTR port = DEFAULT_PORT; //PCSTR = const char* (Pointer Constant STRing)
@@ -170,6 +168,7 @@ int main()
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/receiving-and-sending-data-on-the-server
 	do
 	{
+		cout << "> ";
 		int recvBufferLen = DEFAULT_BUFLEN;
 		char* received = new char[recvBufferLen + 1];
 
@@ -178,7 +177,7 @@ int main()
 
 		if (resultCode > 0)
 		{
-			cout << received;
+			cout  << received << endl;
 		}
 		else if (resultCode == 0)
 		{
