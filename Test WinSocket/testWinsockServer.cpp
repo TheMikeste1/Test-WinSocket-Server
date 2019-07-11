@@ -62,7 +62,8 @@ int main()
 		return 1;
 	}
 
-
+    do
+	{
 	// 2. Create a socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-socket-for-the-server
 	struct addrinfo *servinfo = NULL;
@@ -129,7 +130,6 @@ int main()
 	    WSACleanup();
 	    return 1;
 	}
-
 	// 5. Accept a connection.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/accepting-a-connection
 
@@ -206,7 +206,11 @@ int main()
 	//7.2
 	//Cleanup
 	closesocket(client1);
+	} while(true);
 	WSACleanup();
+
+	//Wait
+	cin.ignore();
 
 	return 0;
 }
