@@ -62,8 +62,7 @@ int main()
 		return 1;
 	}
 
-    do
-	{
+   
 	// 2. Create a socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/creating-a-socket-for-the-server
 	struct addrinfo *servinfo = NULL;
@@ -88,7 +87,7 @@ int main()
 	}
 
 
-
+	
 	//2.2. Create a SOCKET object called listenSocket for the server
 	//   to listen for client connections.
 	//2.3. Call the socket function and return its value to
@@ -106,6 +105,15 @@ int main()
 		WSACleanup();
 		return 1;
 	}
+
+	//Set up listenSocket to be used multiple times
+	char yes = '1';
+	if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &yes,
+            sizeof(yes)) == -1)
+      {
+         cout << "Error setting up socket options.\n";
+         return 1;
+      }
 
 	// 3. Bind the socket.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/binding-a-socket
@@ -130,6 +138,11 @@ int main()
 	    WSACleanup();
 	    return 1;
 	}
+
+	int i = 0;
+	do
+	{
+
 	// 5. Accept a connection.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/accepting-a-connection
 
@@ -160,9 +173,6 @@ int main()
 
 	cout << "Got connection from: " << s << endl;
 
-	closesocket(listenSocket); //We no longer need the listenSocket after
-							   //all wanted clients have connected.
-
 
 	// 6. Receive data.
 	//https://docs.microsoft.com/en-us/windows/desktop/winsock/receiving-and-sending-data-on-the-server
@@ -185,10 +195,9 @@ int main()
 		}
 		else
 		{
-			printf("recv failed: %d\n", WSAGetLastError());
-	        closesocket(client1);
-	        WSACleanup();
-	        return 1;
+			printf("\nrecv failed: %d\n", WSAGetLastError());
+	        //closesocket(client1);
+			break;
 		}
 	} while (resultCode != 0);
 
@@ -199,17 +208,22 @@ int main()
 	{
 		printf("shutdown failed: %d\n", WSAGetLastError());
 	    closesocket(client1);
-	    WSACleanup();
 	    return 1;
 	}
 
 	//7.2
 	//Cleanup
 	closesocket(client1);
-	} while(true);
+	
+	i++;
+	cout << endl;
+	} while(i < 10);
+
+	cout << "Closing server.\n";
+	closesocket(listenSocket);
 	WSACleanup();
 
-	//Wait
+	//Wait	
 	cin.ignore();
 
 	return 0;
